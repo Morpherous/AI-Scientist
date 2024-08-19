@@ -34,6 +34,16 @@ We further provide all runs and data from our paper [here](https://drive.google.
   <a href="https://github.com/SakanaAI/AI-Scientist/blob/main/example_papers/adaptive_dual_scale_denoising/adaptive_dual_scale_denoising.pdf"><img src="https://github.com/SakanaAI/AI-Scientist/blob/main/docs/anim-ai-scientist.gif" alt="Adaptive Dual Scale Denoising" width="80%" />
 </p>
 
+## Table of Contents
+
+1. [Requirements](#requirements)
+2. [Run AI Scientist Paper Generation Experiments](#run-ai-scientist-paper-generation-experiments)
+3. [Getting an LLM Generated Paper Review](#getting-an-llm-generated-paper-review)
+4. [Making your own Template](#making-your-own-template)
+5. [Template Resources](#template-resources)
+6. [Citing The AI Scientist](#citing-the-ai-scientist)
+7. [Frequently Asked Questions](#faq)
+
 ## Requirements
 
 ### Installation
@@ -41,27 +51,44 @@ We further provide all runs and data from our paper [here](https://drive.google.
 ```bash
 conda create -n ai_scientist python=3.11
 conda activate ai_scientist
-
-# LLM APIs
-pip install anthropic aider-chat backoff openai
-# Viz
-pip install matplotlib pypdf pymupdf4llm
 # Install pdflatex
 sudo apt-get install texlive-full
 
-# Common Requirements
-pip install torch numpy transformers datasets tiktoken wandb tqdm
+# Install pypi requirements
+pip install -r requirements.txt
 ```
 
-We use the following environment variables for the different API providers for different models:
+When installing `texlive-full`, you may need to [hold Enter](https://askubuntu.com/questions/956006/pregenerating-context-markiv-format-this-may-take-some-time-takes-forever).
 
-`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`
+### API Keys
+
+#### OpenAI API (GPT-4)
+
+By default, this uses the `OPENAI_API_KEY` environment variable.
+
+#### Anthropic API (Claude Sonnet 3.5)
+
+By default, this uses the `ANTHROPIC_API_KEY` environment variable.
+
+For Claude models provided by [Amazon Bedrock](https://aws.amazon.com/bedrock/), please specify a set of valid [AWS Credentials](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html) and the target [AWS Region](https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-regions.html):
+
+(*required*) `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, (*optional*) `AWS_SESSION_TOKEN`, `AWS_DEFAULT_REGION`
+
+#### DeepSeek API (DeepSeek-Coder-V2)
+
+By default, this uses the `DEEPSEEK_API_KEY` environment variable.
+
+#### OpenRouter API (Llama3.1)
+
+By default, this uses the `OPENROUTER_API_KEY` environment variable.
+
+#### Semantic Scholar API (Literature Search)
 
 Our code can also optionally use a Semantic Scholar API Key (`S2_API_KEY`) for higher throughput [if you have one](https://www.semanticscholar.org/product/api), though in principle it should work without it.
 
 Be sure to provide the key for the model used for your runs, e.g.
 
-```
+```bash
 export OPENAI_API_KEY="YOUR KEY HERE"
 export S2_API_KEY="YOUR KEY HERE"
 ```
@@ -77,13 +104,15 @@ python data/text8/prepare.py
 
 #### Create baseline runs (machine dependent)
 
-```
+```bash
 # Set up NanoGPT baseline run
+# NOTE: YOU MUST FIRST RUN THE PREPARE SCRIPTS ABOVE!
 cd templates/nanoGPT && python experiment.py --out_dir run_0 && python plot.py
 ```
 
 #### Create NanoGPT_lite baseline run. We use this for sanity-checking
-```
+```bash
+# NOTE: YOU MUST FIRST RUN THE PREPARE SCRIPTS ABOVE!
 cd templates/nanoGPT_lite && python experiment.py --out_dir run_0 && python plot.py
 ```
 
@@ -103,12 +132,17 @@ cd templates/2d_diffusion && python experiment.py --out_dir run_0 && python plot
 ### Setup Grokking
 
 ```bash
+# Set up Grokking
+pip install einops
+
 # Set up Grokking baseline run
 cd templates/grokking && python experiment.py --out_dir run_0 && python plot.py
 ```
 
 
 ## Run AI Scientist Paper Generation Experiments
+
+**Note:** please ensure the setup steps above are completed.
 
 ```bash
 conda activate ai_scientist
@@ -121,7 +155,7 @@ python launch_scientist.py --model "claude-3-5-sonnet-20240620" --experiment nan
 
 ```python
 import openai
-from ai_scientist.perform_review import load_paper, get_llm_review
+from ai_scientist.perform_review import load_paper, perform_review
 
 client = openai.OpenAI()
 model = "gpt-4o-2024-05-13"
@@ -129,7 +163,7 @@ model = "gpt-4o-2024-05-13"
 # Load paper from pdf file (raw text)
 paper_txt = load_paper("report.pdf")
 # Get the review dict of the review
-review = get_llm_review(
+review = perform_review(
     paper_txt,
     model,
     client,
@@ -168,21 +202,45 @@ We provide 3 templates, which heavily use code from other repositories, which we
 
 The NanoGPT template used code from [NanoGPT](https://github.com/karpathy/nanoGPT) and this [PR](https://github.com/karpathy/nanoGPT/pull/254).
 
-The 2D Diffusion template used code from [tiny-diffusion](https://github.com/tanelp/tiny-diffusion) and [ema-pytorch](https://github.com/lucidrains/ema-pytorch).
+The 2D Diffusion template used code from [tiny-diffusion](https://github.com/tanelp/tiny-diffusion), [ema-pytorch](https://github.com/lucidrains/ema-pytorch), and [Datasaur](https://www.research.autodesk.com/publications/same-stats-different-graphs/).
 
 The Grokking template used code from [Sea-Snell/grokking](https://github.com/Sea-Snell/grokking) and [danielmamay/grokking](https://github.com/danielmamay/grokking).
 
-## Citing **The AI Scientist** ✏️
+We would like to thank the developers of the open-source models and packages for their contributions and for making their work available.
+
+## Citing The AI Scientist
 
 If you use **The AI Scientist** in your research, please cite it as follows:
 
 ```
 @article{lu2024aiscientist,
-  title={The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery},
-  author={Lu, Chris and Lu, Cong and Lange, Robert and Foerster, Jakob N and Clune, Jeff and Ha, David},
+  title={The {AI} {S}cientist: Towards Fully Automated Open-Ended Scientific Discovery},
+  author={Lu, Chris and Lu, Cong and Lange, Robert Tjarko and Foerster, Jakob and Clune, Jeff and Ha, David},
   journal={arXiv preprint arXiv:2408.06292},
   year={2024}
 }
 ```
 
-We would like to thank the developers of the open-source models and packages for their contributions and for making their work available.
+## FAQ
+
+We recommend reading our paper in the first instance for any questions you have on The AI Scientist.
+
+### Why am I missing files when running The AI Scientist?
+Make sure you have completed all the setup and preparation steps before the main experiment script.
+
+### Why has a PDF or a review not been generated?
+The AI Scientist finishes an idea with a success rate that depends on both the template, the base foundation model, and the complexity of the idea. We advise referring to our main paper. The highest success rates are observed with Claude Sonnet 3.5.
+Reviews are best done with GPT-4o, all other models have issues with positivity bias or failure to conform to required outputs.
+
+### What is the cost of each idea generated?
+Typically less than $15 per paper with Claude Sonnet 3.5. We recommend DeepSeek Coder V2 for a much more cost-effective approach. A good place to look for new models is the [Aider leaderboard](https://aider.chat/docs/leaderboards/).
+
+### How do I change the base conference format associated with the write-ups?
+Change the base `template.tex` files contained within each template.
+
+### How do I run The AI Scientist for different subject fields?
+Please refer to the instructions for different templates. In this current iteration, this is restricted to ideas that can be expressed in code. However, lifting this restriction would represent exciting future work! :)
+
+### How do I add support for a new foundation model?
+Please see this [PR](https://github.com/SakanaAI/AI-Scientist/pull/7) for an example of how to add a new model, e.g. this time for Claude via Bedrock.
+We do not advise any model that is significantly weaker than GPT-4 level for The AI Scientist.
